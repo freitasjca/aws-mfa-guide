@@ -10,20 +10,20 @@ These FIDO-based authenticators use public key cryptography and are resistant to
 Let me build you a comprehensive visual guide.Here's a full visual breakdown across several diagrams:
 
 
-![](./images/mfa_overview.svg =900x540)
+![](./assets/svg/mfa_overview.svg =900x540)
 
 Now let's look at how each specific method works:
 
-![](./images/totp_flow.svg =900x540)
+![](./assets/svg/totp_flow.svg =900x540)
 
 Now FIDO2 / hardware security keys — which work very differently:
 
-![](./images/fido2_flow.svg =900x540)
+![](./assets/svg/fido2_flow.svg =900x540)
 
 
 And finally, the full comparison across all methods:Here's a summary of what each method is at its core:
 
-[![](./images/mfa_comparison.png)](./mfa_comparison.html)
+[![](./assets/images/mfa_comparison.png)](./mfa_comparison.html)
 
 **TOTP** generates a 6-digit code by running a mathematical function on a shared secret + the current time. Both your phone and the server independently do the same math — if the results match, you're in. The code is only valid for 30 seconds. No internet needed. Vulnerable to phishing because a fake site can intercept the code in real time.
 

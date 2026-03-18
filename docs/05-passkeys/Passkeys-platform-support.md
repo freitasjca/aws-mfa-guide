@@ -1,6 +1,6 @@
 # Passkeys   
 
-![](./images/0296-is-passkey-shaping-a-passwordless-future.png =400x826)
+![](./assets/images/0296-is-passkey-shaping-a-passwordless-future.png =400x826)
 
 **How PassKeys Work**
 
