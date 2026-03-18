@@ -4,7 +4,7 @@ Passkeys as MFA and hardware keys
 
 ## The core difference — where the secret lives
 
-[![](../../assets/images/passkeys-vs-hardware-keys.png)](./passkeys-vs-hardware-keys.html)
+[![](../../assets/images/passkeys-vs-hardware-keys.png)](../../assets/html/passkeys-vs-hardware-keys.html)
 
 Both passkeys and hardware keys use identical cryptography (FIDO2/WebAuthn). The difference is entirely about where the private key is stored and whether it can ever leave.
 

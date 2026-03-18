@@ -23,7 +23,7 @@ Now FIDO2 / hardware security keys — which work very differently:
 
 And finally, the full comparison across all methods:Here's a summary of what each method is at its core:
 
-[![](../../assets/images/mfa_comparison.png)](./mfa_comparison.html)
+[![](../../assets/images/mfa_comparison.png)](../../assets/html/mfa_comparison.html)
 
 **TOTP** generates a 6-digit code by running a mathematical function on a shared secret + the current time. Both your phone and the server independently do the same math — if the results match, you're in. The code is only valid for 30 seconds. No internet needed. Vulnerable to phishing because a fake site can intercept the code in real time.
 

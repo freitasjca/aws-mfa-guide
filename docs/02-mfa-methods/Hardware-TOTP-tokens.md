@@ -1,7 +1,7 @@
 Hardware TOTP tokens are a fairly niche tool — they solve a specific problem well, but for most people they're the wrong choice compared to a phone app or a FIDO2 key.
 
 
-[![](../../assets/images/hardware-totp-tokens.png)](./hardware-totp-tokens.html)
+[![](../../assets/images/hardware-totp-tokens.png)](../../assets/html/hardware-totp-tokens.html)
 
 ---
 
