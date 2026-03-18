@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MFA Comparison</title>
+  <style>
+    :root {
+      --color-background-page:      #1a1a1a;
+      --color-background-primary:   #252525;
+      --color-background-secondary: #2e2e2e;
+      --color-background-info:      #0f1f35;
+      --color-border-tertiary:      #3a3a3a;
+      --color-border-info:          #1e4a7a;
+      --color-text-primary:         #e8e8e8;
+      --color-text-secondary:       #888888;
+      --color-text-info:            #60a5fa;
+      --color-check:                #5a9e2f;
+      --color-cross:                #c0392b;
+      --border-radius-md:           8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--color-background-page);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: var(--color-background-primary);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      max-width: 760px;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .subtitle {
+      color: var(--color-text-secondary);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Table ── */
+    .table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+
+    /* Header row */
+    .table thead th {
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      text-align: center;
+      padding: 4px 6px 8px;
+      vertical-align: bottom;
+      line-height: 1.3;
+    }
+    .table thead th:first-child { text-align: left; width: 160px; }
+
+    /* Data rows */
+    .table tbody tr {
+      background: var(--color-background-secondary);
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .table tbody tr:hover { background: #363636; }
+
+    .table tbody td {
+      padding: 10px 8px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      /* Round row corners via first/last cell */
+    }
+    .table tbody td:first-child {
+      padding-left: 14px;
+      text-align: left;
+      border-radius: var(--border-radius-md) 0 0 var(--border-radius-md);
+    }
+    .table tbody td:last-child {
+      padding-right: 14px;
+      border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+    }
+
+    /* Outline via box-shadow on first cell */
+    .table tbody tr td:first-child {
+      box-shadow: -0.5px 0.5px 0 0 var(--color-border-tertiary),
+                  0 -0.5px 0 0 var(--color-border-tertiary),
+                  0  0.5px 0 0 var(--color-border-tertiary);
+    }
+    .table tbody tr td:last-child {
+      box-shadow:  0.5px  0.5px 0 0 var(--color-border-tertiary),
+                   0     -0.5px 0 0 var(--color-border-tertiary),
+                   0      0.5px 0 0 var(--color-border-tertiary);
+    }
+    .table tbody tr td:not(:first-child):not(:last-child) {
+      box-shadow: 0 -0.5px 0 0 var(--color-border-tertiary),
+                  0  0.5px 0 0 var(--color-border-tertiary);
+    }
+
+    .method-name { font-weight: 500; color: var(--color-text-primary); font-size: 13px; }
+    .method-sub  { color: var(--color-text-secondary); font-size: 11px; margin-top: 2px; }
+
+    .check { color: var(--color-check); font-size: 15px; }
+    .cross { color: var(--color-cross); font-size: 15px; }
+    .free  { color: var(--color-check); }
+
+    /* ── Security strength bars ── */
+    .strength-section {
+      border-top: 0.5px solid var(--color-border-tertiary);
+      padding-top: 14px;
+      margin-top: 10px;
+    }
+    .strength-title {
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin-bottom: 10px;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .bar-label {
+      width: 120px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+    }
+    .bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--color-background-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    /* ── AWS info banner ── */
+    .info-banner {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: var(--color-background-info);
+      border: 0.5px solid var(--color-border-info);
+      border-radius: var(--border-radius-md);
+      font-size: 12px;
+      color: var(--color-text-info);
+      line-height: 1.5;
+    }
+    .info-banner strong { font-weight: 500; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <p class="subtitle">Click any method to learn more ↗</p>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Phishing<br>resistant</th>
+        <th>Works<br>offline</th>
+        <th>No phone<br>needed</th>
+        <th>Recovery<br>if lost</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr onclick="window.location.href='AWS-FIDO2%20hardware.md'">
+        <td>
+          <div class="method-name">FIDO2 / Hardware key</div>
+          <div class="method-sub">YubiKey, Titan</div>
+        </td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td>Buy 2nd key</td>
+        <td>€35–70</td>
+      </tr>
+
+      <tr onclick="window.location.href='MFA-Passkey.md'">
+        <td>
+          <div class="method-name">Passkey</div>
+          <div class="method-sub">Windows Hello, Touch ID</div>
+        </td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td>Depends</td>
+        <td>Cloud sync</td>
+        <td class="free">Free</td>
+      </tr>
+
+      <tr onclick="window.location.href='MFA-TOTP.md'">
+        <td>
+          <div class="method-name">TOTP app</div>
+          <div class="method-sub">Google Auth, Authy</div>
+        </td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td>Phone req.</td>
+        <td>Backup codes</td>
+        <td class="free">Free</td>
+      </tr>
+
+      <tr onclick="window.location.href='MFA-Hardware-TOTP.md'">
+        <td>
+          <div class="method-name">Hardware TOTP</div>
+          <div class="method-sub">Gemalto token</div>
+        </td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td>Buy spare</td>
+        <td>€20–50</td>
+      </tr>
+
+      <tr onclick="window.location.href='MFA-SMS-2FA-Email-OTP.md'">
+        <td>
+          <div class="method-name">SMS / Email OTP</div>
+          <div class="method-sub">Text message code</div>
+        </td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td>Phone req.</td>
+        <td class="free">Easy</td>
+        <td class="free">Free</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- Security strength bars -->
+  <div class="strength-section">
+    <div class="strength-title">Security strength</div>
+
+    <div class="bar-row">
+      <div class="bar-label">FIDO2 key</div>
+      <div class="bar-track"><div class="bar-fill" style="width:95%; background:#3B6D11;"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Passkey</div>
+      <div class="bar-track"><div class="bar-fill" style="width:88%; background:#639922;"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">TOTP app</div>
+      <div class="bar-track"><div class="bar-fill" style="width:65%; background:#BA7517;"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Hardware TOTP</div>
+      <div class="bar-track"><div class="bar-fill" style="width:60%; background:#EF9F27;"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">SMS / Email</div>
+      <div class="bar-track"><div class="bar-fill" style="width:30%; background:#E24B4A;"></div></div>
+    </div>
+  </div>
+
+  <!-- AWS note -->
+  <div class="info-banner">
+    <strong>AWS root account</strong> — supports FIDO2 hardware key, TOTP app, and hardware TOTP token. SMS is not available for root.
+  </div>
+
+</div>
+</body>
+</html>

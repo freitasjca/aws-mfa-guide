@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardware TOTP tokens — who are they best for?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-info: #0c447c;
+    --text-success: #27500a;
+    --text-warning: #633806;
+    --text-danger: #791f1f;
+    --border-tertiary: rgba(0,0,0,0.12);
+    --border-secondary: rgba(0,0,0,0.22);
+    --border-info: #85b7eb;
+    --border-success: #97c459;
+    --border-warning: #ef9f27;
+    --border-danger: #f09595;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #28271f;
+      --bg-tertiary: #2c2c2a;
+      --bg-info: #042c53;
+      --bg-success: #173404;
+      --bg-warning: #412402;
+      --bg-danger: #501313;
+      --text-primary: #e8e6dc;
+      --text-secondary: #9c9a92;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #ef9f27;
+      --text-danger: #f09595;
+      --border-tertiary: rgba(255,255,255,0.10);
+      --border-secondary: rgba(255,255,255,0.20);
+      --border-info: #185fa5;
+      --border-success: #3b6d11;
+      --border-warning: #854f0b;
+      --border-danger: #a32d2d;
+    }
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .page-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Token device cards */
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .device-grid { grid-template-columns: 1fr; }
+  }
+
+  .device-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  .device-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .device-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .device-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    border-top: 0.5px solid var(--border-tertiary);
+    padding-top: 5px;
+    gap: 8px;
+  }
+
+  .device-row + .device-row { margin-top: 5px; }
+
+  .row-label { color: var(--text-secondary); }
+  .row-val { font-weight: 500; color: var(--text-primary); text-align: right; }
+  .row-val.success { color: var(--text-success); }
+  .row-val.warning { color: var(--text-warning); }
+  .row-val.danger  { color: var(--text-danger); }
+
+  /* Section */
+  .section {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  /* Use-case rows */
+  .usecase-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .usecase-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  @media (max-width: 520px) {
+    .usecase-row { flex-direction: column; gap: 3px; }
+    .usecase-label { min-width: unset !important; }
+  }
+
+  .usecase-label {
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 170px;
+    flex-shrink: 0;
+  }
+
+  .usecase-desc { font-size: 12px; }
+
+  .usecase-row.success { background: var(--bg-success); }
+  .usecase-row.info    { background: var(--bg-info); }
+  .usecase-row.warning { background: var(--bg-warning); }
+
+  .usecase-row.success .usecase-label,
+  .usecase-row.success .usecase-desc { color: var(--text-success); }
+  .usecase-row.info .usecase-label,
+  .usecase-row.info .usecase-desc { color: var(--text-info); }
+  .usecase-row.warning .usecase-label,
+  .usecase-row.warning .usecase-desc { color: var(--text-warning); }
+
+  /* Comparison grid */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+  }
+
+  .compare-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .compare-item {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 0;
+  }
+
+  .compare-item::before {
+    content: "– ";
+    opacity: 0.5;
+  }
+
+  /* Callout */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 0.5px solid;
+  }
+
+  .callout-warning {
+    background: var(--bg-warning);
+    border-color: var(--border-warning);
+    color: var(--text-warning);
+  }
+
+  .callout strong { font-weight: 500; }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Hardware TOTP tokens</h1>
+    <p>Who are they best for?</p>
+  </div>
+
+  <!-- Device cards -->
+  <div class="device-grid">
+
+    <div class="device-card">
+      <div class="badge">Physical token</div>
+      <div class="device-name">Thales / Gemalto</div>
+      <div class="device-sub">OTP110 / OTP100</div>
+      <div class="device-row"><span class="row-label">Type</span><span class="row-val">TOTP / HOTP</span></div>
+      <div class="device-row"><span class="row-label">AWS compatible</span><span class="row-val success">Yes</span></div>
+      <div class="device-row"><span class="row-label">Battery life</span><span class="row-val">3–5 years</span></div>
+      <div class="device-row"><span class="row-label">Cost</span><span class="row-val">€20–40</span></div>
+    </div>
+
+    <div class="device-card">
+      <div class="badge">Popular choice</div>
+      <div class="device-name">SafeNet eToken</div>
+      <div class="device-sub">PASS / Display Card</div>
+      <div class="device-row"><span class="row-label">Type</span><span class="row-val">TOTP</span></div>
+      <div class="device-row"><span class="row-label">AWS compatible</span><span class="row-val success">Yes</span></div>
+      <div class="device-row"><span class="row-label">Battery life</span><span class="row-val">3–5 years</span></div>
+      <div class="device-row"><span class="row-label">Cost</span><span class="row-val">€25–50</span></div>
+    </div>
+
+    <div class="device-card">
+      <div class="badge">Enterprise</div>
+      <div class="device-name">RSA SecurID</div>
+      <div class="device-sub">Hardware token</div>
+      <div class="device-row"><span class="row-label">Type</span><span class="row-val">Proprietary OTP</span></div>
+      <div class="device-row"><span class="row-label">AWS compatible</span><span class="row-val warning">Limited</span></div>
+      <div class="device-row"><span class="row-label">Battery life</span><span class="row-val">3 years</span></div>
+      <div class="device-row"><span class="row-label">Cost</span><span class="row-val warning">€50–100+</span></div>
+    </div>
+
+  </div>
+
+  <!-- Who they are best for -->
+  <div class="section">
+    <div class="section-title">Who they are best for</div>
+    <div class="usecase-list">
+
+      <div class="usecase-row success">
+        <div class="usecase-label">No smartphone policy</div>
+        <div class="usecase-desc">Regulated environments (banks, government, defence) where phones are banned from the work floor</div>
+      </div>
+
+      <div class="usecase-row success">
+        <div class="usecase-label">Shared / pool accounts</div>
+        <div class="usecase-desc">A token sits in a safe and gets handed to whoever needs access — no personal phone required</div>
+      </div>
+
+      <div class="usecase-row success">
+        <div class="usecase-label">Non-technical staff</div>
+        <div class="usecase-desc">Simpler than installing and configuring an authenticator app — press button, read code</div>
+      </div>
+
+      <div class="usecase-row info">
+        <div class="usecase-label">AWS root backup MFA</div>
+        <div class="usecase-desc">Register as a second MFA device alongside a hardware key — physical fallback with no phone dependency</div>
+      </div>
+
+      <div class="usecase-row warning">
+        <div class="usecase-label">Individual personal use</div>
+        <div class="usecase-desc">Probably not — an authenticator app or hardware FIDO2 key is cheaper, more flexible, and easier</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Hardware TOTP vs FIDO2 comparison -->
+  <div class="section">
+    <div class="section-title">Hardware TOTP vs hardware FIDO2 key — key differences</div>
+    <div class="compare-grid">
+
+      <div class="compare-card">
+        <div class="compare-title">Hardware TOTP token</div>
+        <div class="compare-item">Generates a 6-digit code on a screen</div>
+        <div class="compare-item">You type the code into the login form</div>
+        <div class="compare-item">No USB — no computer connection needed</div>
+        <div class="compare-item">Code can still be phished in real time</div>
+        <div class="compare-item">Works anywhere TOTP is supported</div>
+      </div>
+
+      <div class="compare-card">
+        <div class="compare-title">Hardware FIDO2 key (YubiKey)</div>
+        <div class="compare-item">Signs a cryptographic challenge silently</div>
+        <div class="compare-item">You just touch it — nothing to type</div>
+        <div class="compare-item">Requires USB or NFC connection</div>
+        <div class="compare-item">Phishing-proof — domain-bound</div>
+        <div class="compare-item">Only works where FIDO2 is supported</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Battery warning -->
+  <div class="callout callout-warning">
+    <strong>Battery warning: </strong>Hardware TOTP tokens have non-replaceable batteries. When the battery dies (typically 3–5 years), the token must be replaced entirely. Set a calendar reminder well in advance and always keep a spare token registered as backup MFA so you are never locked out when one expires.
+  </div>
+
+  <div class="footer">Hardware TOTP tokens reference guide</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passkeys vs Hardware Security Keys</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-info: #0c447c;
+    --text-success: #27500a;
+    --text-warning: #633806;
+    --text-danger: #791f1f;
+    --border-tertiary: rgba(0,0,0,0.12);
+    --border-secondary: rgba(0,0,0,0.22);
+    --border-info: #85b7eb;
+    --border-success: #97c459;
+    --border-warning: #ef9f27;
+    --border-danger: #f09595;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #28271f;
+      --bg-tertiary: #2c2c2a;
+      --bg-info: #042c53;
+      --bg-success: #173404;
+      --bg-warning: #412402;
+      --bg-danger: #501313;
+      --text-primary: #e8e6dc;
+      --text-secondary: #9c9a92;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #ef9f27;
+      --text-danger: #f09595;
+      --border-tertiary: rgba(255,255,255,0.10);
+      --border-secondary: rgba(255,255,255,0.20);
+      --border-info: #185fa5;
+      --border-success: #3b6d11;
+      --border-warning: #854f0b;
+      --border-danger: #a32d2d;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .page-wrapper {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .section {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  /* Two-column card grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 520px) {
+    .card-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+  }
+
+  .card.featured {
+    border: 2px solid var(--border-info);
+  }
+
+  .card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+  }
+
+  .badge-info { background: var(--bg-info); color: var(--text-info); }
+  .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+
+  .card-row {
+    border-top: 0.5px solid var(--border-tertiary);
+    padding: 7px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .card-row:first-of-type { border-top: none; }
+
+  .row-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .row-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .row-value.success { color: var(--text-success); }
+  .row-value.danger  { color: var(--text-danger); }
+  .row-value.muted   { color: var(--text-secondary); }
+
+  /* Bullet list */
+  .bullet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bullet-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .bullet-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .dot-success { background: var(--bg-success); border: 1.5px solid var(--border-success); }
+  .dot-warning { background: var(--bg-warning); border: 1.5px solid var(--border-warning); }
+
+  .bullet-text {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  /* Metric cards */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+  }
+
+  .metric-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .metric-value.success { color: var(--text-success); }
+  .metric-value.danger  { color: var(--text-danger); }
+
+  /* Use-case rows */
+  .usecase-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .usecase-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .usecase-row.danger  { background: var(--bg-danger); }
+  .usecase-row.warning { background: var(--bg-warning); }
+  .usecase-row.success { background: var(--bg-success); }
+
+  .usecase-label {
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .usecase-desc {
+    font-size: 12px;
+  }
+
+  .usecase-row.danger  .usecase-label,
+  .usecase-row.danger  .usecase-desc  { color: var(--text-danger); }
+  .usecase-row.warning .usecase-label,
+  .usecase-row.warning .usecase-desc  { color: var(--text-warning); }
+  .usecase-row.success .usecase-label,
+  .usecase-row.success .usecase-desc  { color: var(--text-success); }
+
+  /* Alert / callout */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 0.5px solid;
+    margin-top: 0;
+  }
+
+  .callout-info {
+    background: var(--bg-info);
+    border-color: var(--border-info);
+    color: var(--text-info);
+  }
+
+  .callout strong { font-weight: 500; }
+
+  /* Platform grid */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .platform-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+  }
+
+  .platform-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .platform-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Divider */
+  hr {
+    border: none;
+    border-top: 0.5px solid var(--border-tertiary);
+    margin: 14px 0;
+  }
+
+  /* Footer */
+  .page-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Passkeys vs Hardware security keys</h1>
+    <p>Same cryptography — different threat model</p>
+  </div>
+
+  <!-- Side-by-side comparison cards -->
+  <div class="section">
+    <div class="card-grid">
+
+      <div class="card">
+        <div class="card-name">Passkey</div>
+        <div class="card-subtitle">FIDO2 in software</div>
+
+        <div class="card-row">
+          <div class="row-label">Private key stored in</div>
+          <div class="row-value">OS / password manager</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Authentication via</div>
+          <div class="row-value">Biometric or PIN unlock</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Can be backed up</div>
+          <div class="row-value success">Yes — cloud sync</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Physical device needed</div>
+          <div class="row-value muted">No</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Cost</div>
+          <div class="row-value success">Free</div>
+        </div>
+      </div>
+
+      <div class="card featured">
+        <div class="badge badge-info">Recommended for AWS root</div>
+        <div class="card-name">Hardware security key</div>
+        <div class="card-subtitle">FIDO2 in hardware (YubiKey)</div>
+
+        <div class="card-row">
+          <div class="row-label">Private key stored in</div>
+          <div class="row-value">Tamper-proof chip (TPM)</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Authentication via</div>
+          <div class="row-value">Physical touch (presence)</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Can be backed up</div>
+          <div class="row-value danger">No — by design</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Physical device needed</div>
+          <div class="row-value">Yes — always</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label">Cost</div>
+          <div class="row-value">€35–70</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Shared traits & differences -->
+  <div class="section">
+    <div class="section-title">Same cryptography — different threat model</div>
+    <div class="bullet-list">
+      <div class="bullet-item">
+        <div class="bullet-dot dot-success"></div>
+        <div class="bullet-text">Both use public-key cryptography — private key signs a challenge, server verifies with public key</div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot dot-success"></div>
+        <div class="bullet-text">Both are domain-bound — immune to phishing by a fake site</div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot dot-warning"></div>
+        <div class="bullet-text">Passkey: if your device or cloud account is compromised, the private key could theoretically be extracted</div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot dot-success"></div>
+        <div class="bullet-text">Hardware key: private key lives in a tamper-proof chip — physically cannot be exported, ever</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Where passkeys live -->
+  <div class="section">
+    <div class="section-title">Where passkeys live (by platform)</div>
+    <div class="platform-grid">
+      <div class="platform-card">
+        <div class="platform-name">Windows Hello</div>
+        <div class="platform-detail">TPM chip on device</div>
+        <div class="platform-detail">Sync via Microsoft account</div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-name">Apple (iOS/macOS)</div>
+        <div class="platform-detail">Secure Enclave chip</div>
+        <div class="platform-detail">Sync via iCloud Keychain</div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-name">Android</div>
+        <div class="platform-detail">Secure element</div>
+        <div class="platform-detail">Sync via Google Password Mgr</div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-name">1Password / Bitwarden</div>
+        <div class="platform-detail">Encrypted vault</div>
+        <div class="platform-detail">Sync across all devices</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Use cases -->
+  <div class="section">
+    <div class="section-title">Which to use — by use case</div>
+    <div class="usecase-list">
+      <div class="usecase-row danger">
+        <div class="usecase-label">AWS root account</div>
+        <div class="usecase-desc">Hardware key — passkeys not supported for root MFA</div>
+      </div>
+      <div class="usecase-row warning">
+        <div class="usecase-label">AWS IAM users</div>
+        <div class="usecase-desc">Hardware key or passkey both work</div>
+      </div>
+      <div class="usecase-row success">
+        <div class="usecase-label">Google, GitHub, Amazon</div>
+        <div class="usecase-desc">Passkeys work great — convenient and phishing-proof</div>
+      </div>
+      <div class="usecase-row success">
+        <div class="usecase-label">Personal accounts</div>
+        <div class="usecase-desc">Passkeys — easy, free, no hardware to carry</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key insight callout -->
+  <div class="callout callout-info">
+    <strong>Key insight: </strong>Passkeys trade the hardware key's "cannot be copied" guarantee for the convenience of cloud sync and no physical device. For most accounts, that tradeoff is worth it. For AWS root, it isn't.
+  </div>
+
+  <div class="page-footer">Passkeys &amp; Hardware Keys reference guide</div>
+
+</div>
+</body>
+</html>

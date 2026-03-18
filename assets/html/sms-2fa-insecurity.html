@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why is SMS 2FA insecure?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-info: #0c447c;
+    --text-success: #27500a;
+    --text-warning: #633806;
+    --text-danger: #791f1f;
+    --border-tertiary: rgba(0,0,0,0.12);
+    --border-secondary: rgba(0,0,0,0.22);
+    --border-info: #85b7eb;
+    --border-success: #97c459;
+    --border-warning: #ef9f27;
+    --border-danger: #f09595;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #28271f;
+      --bg-tertiary: #2c2c2a;
+      --bg-info: #042c53;
+      --bg-success: #173404;
+      --bg-warning: #412402;
+      --bg-danger: #501313;
+      --text-primary: #e8e6dc;
+      --text-secondary: #9c9a92;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #ef9f27;
+      --text-danger: #f09595;
+      --border-tertiary: rgba(255,255,255,0.10);
+      --border-secondary: rgba(255,255,255,0.20);
+      --border-info: #185fa5;
+      --border-success: #3b6d11;
+      --border-warning: #854f0b;
+      --border-danger: #a32d2d;
+    }
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .page-wrapper {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Attack cards */
+  .attack-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .attack-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+  }
+
+  .attack-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .dot-indicator {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dot-indicator .inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot-danger  { background: var(--bg-danger); }
+  .dot-danger .inner  { background: var(--text-danger); }
+  .dot-warning { background: var(--bg-warning); }
+  .dot-warning .inner { background: var(--text-warning); }
+  .dot-neutral { background: var(--bg-secondary); }
+  .dot-neutral .inner { background: var(--text-secondary); }
+
+  .attack-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .severity-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+  }
+
+  .badge-danger  { background: var(--bg-danger);  color: var(--text-danger); }
+  .badge-warning { background: var(--bg-warning); color: var(--text-warning); }
+  .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+
+  .attack-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+
+  .attack-note {
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .note-danger  { color: var(--text-danger); }
+  .note-warning { color: var(--text-warning); }
+
+  /* Comparison table section */
+  .section {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+  }
+
+  th {
+    text-align: left;
+    padding: 6px 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 0.5px solid var(--border-tertiary);
+  }
+
+  th:not(:first-child) { text-align: center; }
+
+  td {
+    padding: 7px 10px;
+    color: var(--text-primary);
+    border-bottom: 0.5px solid var(--border-tertiary);
+    vertical-align: middle;
+  }
+
+  td:not(:first-child) { text-align: center; }
+  tr:last-child td { border-bottom: none; }
+
+  .cell-danger  { color: var(--text-danger);  font-weight: 500; }
+  .cell-warning { color: var(--text-warning); font-weight: 500; }
+  .cell-success { color: var(--text-success); font-weight: 500; }
+
+  /* Callout */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 0.5px solid;
+  }
+
+  .callout-info {
+    background: var(--bg-info);
+    border-color: var(--border-info);
+    color: var(--text-info);
+  }
+
+  .callout strong { font-weight: 500; }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Why is SMS 2FA insecure?</h1>
+    <p>Structural weaknesses compared to TOTP and FIDO2</p>
+  </div>
+
+  <!-- Attack cards -->
+  <div class="attack-list">
+
+    <div class="attack-card">
+      <div class="attack-header">
+        <div class="dot-indicator dot-danger"><div class="inner"></div></div>
+        <div class="attack-name">SIM swap attack</div>
+        <div class="severity-badge badge-danger">High risk</div>
+      </div>
+      <p class="attack-desc">An attacker calls your mobile carrier, impersonates you using personal data bought from data brokers, and convinces them to transfer your phone number to a SIM card the attacker controls. Your phone loses signal. All your SMS codes now go to the attacker.</p>
+      <div class="attack-note note-danger">No malware needed — just a phone call to your carrier.</div>
+    </div>
+
+    <div class="attack-card">
+      <div class="attack-header">
+        <div class="dot-indicator dot-danger"><div class="inner"></div></div>
+        <div class="attack-name">SS7 protocol exploit</div>
+        <div class="severity-badge badge-danger">Infrastructure flaw</div>
+      </div>
+      <p class="attack-desc">SS7 is the 1970s-era signalling protocol that routes SMS worldwide. It was designed for trust between carriers, not security. Attackers with access to the SS7 network (nation-states, criminal groups, rogue carriers) can intercept and redirect SMS messages in transit — invisibly, without touching your phone.</p>
+      <div class="attack-note note-danger">No fix possible — it is a flaw baked into the global telecom infrastructure.</div>
+    </div>
+
+    <div class="attack-card">
+      <div class="attack-header">
+        <div class="dot-indicator dot-warning"><div class="inner"></div></div>
+        <div class="attack-name">Real-time phishing interception</div>
+        <div class="severity-badge badge-warning">Common</div>
+      </div>
+      <p class="attack-desc">A fake login page captures your password, then immediately logs into the real site and triggers an SMS. The fake page shows you a "please enter your code" prompt. You type the SMS code in — the attacker relays it to the real site within the 30-second window. Done.</p>
+      <div class="attack-note note-warning">TOTP apps are equally vulnerable to this attack.</div>
+    </div>
+
+    <div class="attack-card">
+      <div class="attack-header">
+        <div class="dot-indicator dot-warning"><div class="inner"></div></div>
+        <div class="attack-name">Malware on device</div>
+        <div class="severity-badge badge-warning">Moderate</div>
+      </div>
+      <p class="attack-desc">Android malware can read SMS messages directly from the inbox, including 2FA codes. Banking trojans have done this for years. The code arrives, the malware forwards it before you even see the notification.</p>
+    </div>
+
+    <div class="attack-card">
+      <div class="attack-header">
+        <div class="dot-indicator dot-neutral"><div class="inner"></div></div>
+        <div class="attack-name">Requires mobile signal</div>
+        <div class="severity-badge badge-neutral">Availability</div>
+      </div>
+      <p class="attack-desc">Unlike TOTP or hardware keys, SMS requires your phone to have mobile signal. Travel abroad, roaming issues, carrier outages, or simply poor signal can lock you out entirely.</p>
+    </div>
+
+  </div>
+
+  <!-- Comparison table -->
+  <div class="section">
+    <div class="section-title">Vulnerability by attack type — all methods compared</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Attack</th>
+            <th>SMS</th>
+            <th>TOTP app</th>
+            <th>FIDO2 key</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SIM swap</td>
+            <td class="cell-danger">Vulnerable</td>
+            <td class="cell-success">Safe</td>
+            <td class="cell-success">Safe</td>
+          </tr>
+          <tr>
+            <td>SS7 intercept</td>
+            <td class="cell-danger">Vulnerable</td>
+            <td class="cell-success">Safe</td>
+            <td class="cell-success">Safe</td>
+          </tr>
+          <tr>
+            <td>Real-time phishing</td>
+            <td class="cell-danger">Vulnerable</td>
+            <td class="cell-danger">Vulnerable</td>
+            <td class="cell-success">Safe</td>
+          </tr>
+          <tr>
+            <td>Device malware</td>
+            <td class="cell-danger">Vulnerable</td>
+            <td class="cell-warning">Partial</td>
+            <td class="cell-success">Safe</td>
+          </tr>
+          <tr>
+            <td>No signal / offline</td>
+            <td class="cell-danger">Breaks</td>
+            <td class="cell-success">Works</td>
+            <td class="cell-success">Works</td>
+          </tr>
+          <tr>
+            <td>Password-only breach</td>
+            <td class="cell-success">Still protected</td>
+            <td class="cell-success">Still protected</td>
+            <td class="cell-success">Still protected</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bottom line callout -->
+  <div class="callout callout-info">
+    <strong>Bottom line: </strong>SMS 2FA is much better than no 2FA — it stops most automated attacks. But it has structural weaknesses that TOTP and FIDO2 simply don't have. For any high-value account (AWS, email, banking), upgrade away from SMS. That is why AWS does not offer SMS as an option for root accounts at all.
+  </div>
+
+  <div class="footer">SMS 2FA security reference guide</div>
+
+</div>
+</body>
+</html>

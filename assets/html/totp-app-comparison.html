@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTP Authenticator Apps — Which one should I use?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-info: #0c447c;
+    --text-success: #27500a;
+    --text-warning: #633806;
+    --text-danger: #791f1f;
+    --border-tertiary: rgba(0,0,0,0.12);
+    --border-secondary: rgba(0,0,0,0.22);
+    --border-info: #85b7eb;
+    --border-success: #97c459;
+    --border-warning: #ef9f27;
+    --border-danger: #f09595;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #28271f;
+      --bg-tertiary: #2c2c2a;
+      --bg-info: #042c53;
+      --bg-success: #173404;
+      --bg-warning: #412402;
+      --bg-danger: #501313;
+      --text-primary: #e8e6dc;
+      --text-secondary: #9c9a92;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --text-warning: #ef9f27;
+      --text-danger: #f09595;
+      --border-tertiary: rgba(255,255,255,0.10);
+      --border-secondary: rgba(255,255,255,0.20);
+      --border-info: #185fa5;
+      --border-success: #3b6d11;
+      --border-warning: #854f0b;
+      --border-danger: #a32d2d;
+    }
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .page-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* App cards grid */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 480px) {
+    .app-grid { grid-template-columns: 1fr; }
+  }
+
+  .app-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+  }
+
+  .app-card.featured {
+    border: 2px solid var(--border-info);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+  }
+
+  .badge-info    { background: var(--bg-info);    color: var(--text-info); }
+  .badge-success { background: var(--bg-success); color: var(--text-success); }
+  .badge-neutral { background: var(--bg-secondary); color: var(--text-secondary); }
+
+  .app-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .app-platform {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .app-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    border-top: 0.5px solid var(--border-tertiary);
+    padding-top: 5px;
+    padding-bottom: 0;
+    gap: 8px;
+  }
+
+  .app-row + .app-row { margin-top: 5px; }
+
+  .row-label { color: var(--text-secondary); }
+
+  .row-val         { font-weight: 500; color: var(--text-primary); text-align: right; }
+  .row-val.success { color: var(--text-success); }
+  .row-val.warning { color: var(--text-warning); }
+  .row-val.danger  { color: var(--text-danger); }
+
+  /* Section card */
+  .section {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  /* Bullet list */
+  .bullet-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .bullet-item { display: flex; gap: 10px; align-items: flex-start; }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .dot-success { background: var(--bg-success); border: 1.5px solid var(--border-success); }
+  .dot-warning { background: var(--bg-warning); border: 1.5px solid var(--border-warning); }
+
+  .bullet-text { font-size: 13px; color: var(--text-primary); }
+  .bullet-text em { font-style: italic; }
+
+  /* Recommendation rows */
+  .rec-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .rec-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  @media (max-width: 500px) {
+    .rec-row { flex-direction: column; gap: 4px; }
+    .rec-label { min-width: unset !important; }
+  }
+
+  .rec-row.info    { background: var(--bg-info); }
+  .rec-row.success { background: var(--bg-success); }
+  .rec-row.neutral { background: var(--bg-secondary); }
+  .rec-row.warning { background: var(--bg-warning); }
+
+  .rec-label {
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 160px;
+    flex-shrink: 0;
+  }
+
+  .rec-desc { font-size: 12px; }
+
+  .rec-row.info    .rec-label, .rec-row.info    .rec-desc { color: var(--text-info); }
+  .rec-row.success .rec-label, .rec-row.success .rec-desc { color: var(--text-success); }
+  .rec-row.neutral .rec-label, .rec-row.neutral .rec-desc { color: var(--text-secondary); }
+  .rec-row.warning .rec-label, .rec-row.warning .rec-desc { color: var(--text-warning); }
+
+  /* Callout */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 0.5px solid;
+    margin-top: 0;
+  }
+
+  .callout-warning {
+    background: var(--bg-warning);
+    border-color: var(--border-warning);
+    color: var(--text-warning);
+  }
+
+  .callout strong { font-weight: 500; }
+
+  /* Explainer section */
+  .explainer-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 540px) {
+    .explainer-grid { grid-template-columns: 1fr; }
+  }
+
+  .explainer-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+  }
+
+  .explainer-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+  }
+
+  .explainer-body {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>TOTP authenticator apps</h1>
+    <p>Which one should I use?</p>
+  </div>
+
+  <!-- App comparison cards -->
+  <div class="app-grid">
+
+    <div class="app-card featured">
+      <div class="badge badge-info">Best for AWS + KeePass</div>
+      <div class="app-name">KeePassXC</div>
+      <div class="app-platform">Windows / Mac / Linux</div>
+      <div class="app-row"><span class="row-label">Cloud backup</span><span class="row-val danger">No</span></div>
+      <div class="app-row"><span class="row-label">TOTP built-in</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Password + TOTP</span><span class="row-val success">Same vault</span></div>
+      <div class="app-row"><span class="row-label">Offline use</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Cost</span><span class="row-val success">Free</span></div>
+    </div>
+
+    <div class="app-card">
+      <div class="badge badge-success">Best cloud backup</div>
+      <div class="app-name">Authy</div>
+      <div class="app-platform">iOS / Android / Desktop</div>
+      <div class="app-row"><span class="row-label">Cloud backup</span><span class="row-val success">Yes — Authy acct</span></div>
+      <div class="app-row"><span class="row-label">Multi-device</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Password + TOTP</span><span class="row-val">Separate app</span></div>
+      <div class="app-row"><span class="row-label">Offline use</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Cost</span><span class="row-val success">Free</span></div>
+    </div>
+
+    <div class="app-card">
+      <div class="badge badge-neutral">Most common</div>
+      <div class="app-name">Google Authenticator</div>
+      <div class="app-platform">iOS / Android</div>
+      <div class="app-row"><span class="row-label">Cloud backup</span><span class="row-val warning">Google acct only</span></div>
+      <div class="app-row"><span class="row-label">Multi-device</span><span class="row-val warning">Limited</span></div>
+      <div class="app-row"><span class="row-label">Password + TOTP</span><span class="row-val">Separate app</span></div>
+      <div class="app-row"><span class="row-label">Offline use</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Cost</span><span class="row-val success">Free</span></div>
+    </div>
+
+    <div class="app-card">
+      <div class="badge badge-neutral">All-in-one</div>
+      <div class="app-name">1Password</div>
+      <div class="app-platform">All platforms</div>
+      <div class="app-row"><span class="row-label">Cloud backup</span><span class="row-val success">Yes — vault sync</span></div>
+      <div class="app-row"><span class="row-label">Multi-device</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Password + TOTP</span><span class="row-val success">Same vault</span></div>
+      <div class="app-row"><span class="row-label">Offline use</span><span class="row-val success">Yes</span></div>
+      <div class="app-row"><span class="row-label">Cost</span><span class="row-val warning">~€3/month</span></div>
+    </div>
+
+  </div>
+
+  <!-- Security tradeoff -->
+  <div class="section">
+    <div class="section-title">The security tradeoff — same secret, two locations</div>
+    <div class="bullet-list">
+      <div class="bullet-item">
+        <div class="dot dot-warning"></div>
+        <div class="bullet-text">Storing password <em>and</em> TOTP in the same vault reduces 2FA's protection — if the vault is compromised, both factors are exposed</div>
+      </div>
+      <div class="bullet-item">
+        <div class="dot dot-success"></div>
+        <div class="bullet-text">Mitigation: use a very strong vault master password + key file, and keep TOTP in a separate app for high-stakes accounts like AWS root</div>
+      </div>
+      <div class="bullet-item">
+        <div class="dot dot-success"></div>
+        <div class="bullet-text">For most personal accounts (Google, GitHub, Amazon) same-vault TOTP is a practical, acceptable tradeoff vs. losing access</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What if phone is lost -->
+  <div class="section">
+    <div class="section-title">What happens if you lose your phone?</div>
+    <div class="explainer-grid">
+      <div class="explainer-card">
+        <div class="explainer-title">No backup (e.g. Google Authenticator, no sync)</div>
+        <div class="explainer-body">TOTP codes are gone. You must use recovery codes for every account, then re-register TOTP from scratch on a new device. High risk of lockout.</div>
+      </div>
+      <div class="explainer-card">
+        <div class="explainer-title">With backup (Authy / 1Password / KeePassXC vault copy)</div>
+        <div class="explainer-body">Log in to your backup service on a new phone. All secrets restore immediately. No recovery codes needed, no re-scanning QR codes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendation by situation -->
+  <div class="section">
+    <div class="section-title">Recommendation by situation</div>
+    <div class="rec-list">
+      <div class="rec-row info">
+        <div class="rec-label">Already using KeePass</div>
+        <div class="rec-desc">Use KeePassXC — TOTP built-in, everything in one encrypted vault</div>
+      </div>
+      <div class="rec-row success">
+        <div class="rec-label">Want best backup</div>
+        <div class="rec-desc">Use Authy — encrypted cloud sync, survives phone loss with no recovery codes needed</div>
+      </div>
+      <div class="rec-row neutral">
+        <div class="rec-label">Simplest setup</div>
+        <div class="rec-desc">Google Authenticator — familiar, widely supported; enable Google account sync to avoid lockout</div>
+      </div>
+      <div class="rec-row warning">
+        <div class="rec-label">AWS root specifically</div>
+        <div class="rec-desc">Hardware key is better — but KeePassXC or Authy work if hardware is not an option</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Warning callout -->
+  <div class="callout callout-warning">
+    <strong>Always save backup codes: </strong>Every site that supports TOTP also offers one-time recovery codes at setup. Save them offline (password manager or printed copy in a safe). If your phone is lost and you have no backup, these are your only way back in.
+  </div>
+
+  <div class="footer">TOTP authenticator apps reference guide</div>
+
+</div>
+</body>
+</html>
