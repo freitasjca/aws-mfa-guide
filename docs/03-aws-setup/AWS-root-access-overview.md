@@ -22,7 +22,7 @@ Dedicated physical devices (e.g., Gemalto tokens) that generate time-based codes
 
 ---
 
-![](./assets/images/AWS-Root-access.png)
+![](../../assets/images/AWS-Root-access.png)
 
 
 **Quick comparison:**

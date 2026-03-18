@@ -9,7 +9,7 @@ Here's everything you need to know to get started with a hardware security key o
 When you plug in a hardware key and touch it, three things happen that can't be faked remotely:
 
 
-[![](./assets/images/fido2_aws_guide.png)](./fido2_aws_guide.html)
+[![](../../assets/images/fido2_aws_guide.png)](./fido2_aws_guide.html)
 
 The key proves **physical presence** — you actually had to touch it. It proves **domain authenticity** — the key was registered at `signin.aws.amazon.com` and will only respond to that exact domain, so a fake site gets nothing useful. And it proves **possession** — without the physical device, the private key simply doesn't exist anywhere else in the world.
 

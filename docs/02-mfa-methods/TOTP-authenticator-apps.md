@@ -1,7 +1,7 @@
 Here's the full breakdown of each option and what makes them different from each other.
 
 
-[![](./assets/images/totp-app-comparison.png)](./totp-app-comparison.html)
+[![](../../assets/images/totp-app-comparison.png)](./totp-app-comparison.html)
 
 ---
 
